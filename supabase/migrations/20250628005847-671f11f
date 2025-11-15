@@ -1,0 +1,78 @@
+
+-- Check and create only missing policies for tasks table
+
+-- Create policy for UPDATE if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'tasks' 
+        AND policyname = 'Users can update their own tasks'
+    ) THEN
+        CREATE POLICY "Users can update their own tasks" 
+        ON public.tasks 
+        FOR UPDATE 
+        USING (auth.uid() = user_id);
+    END IF;
+END $$;
+
+-- Create policy for DELETE if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'tasks' 
+        AND policyname = 'Users can delete their own tasks'
+    ) THEN
+        CREATE POLICY "Users can delete their own tasks" 
+        ON public.tasks 
+        FOR DELETE 
+        USING (auth.uid() = user_id);
+    END IF;
+END $$;
+
+-- Enable Row Level Security on user_settings table if not already enabled
+ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for user_settings table
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'user_settings' 
+        AND policyname = 'Users can view their own settings'
+    ) THEN
+        CREATE POLICY "Users can view their own settings" 
+        ON public.user_settings 
+        FOR SELECT 
+        USING (auth.uid() = user_id);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'user_settings' 
+        AND policyname = 'Users can create their own settings'
+    ) THEN
+        CREATE POLICY "Users can create their own settings" 
+        ON public.user_settings 
+        FOR INSERT 
+        WITH CHECK (auth.uid() = user_id);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE tablename = 'user_settings' 
+        AND policyname = 'Users can update their own settings'
+    ) THEN
+        CREATE POLICY "Users can update their own settings" 
+        ON public.user_settings 
+        FOR UPDATE 
+        USING (auth.uid() = user_id);
+    END IF;
+END $$;
